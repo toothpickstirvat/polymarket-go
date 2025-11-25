@@ -13,11 +13,14 @@ import (
 	clobconst "github.com/ivanzzeth/polymarket-go-clob-client/constants"
 	"github.com/ivanzzeth/polymarket-go-clob-client/types"
 	"github.com/ivanzzeth/polymarket-go-order-utils/pkg/builder"
+	"github.com/shopspring/decimal"
 
 	polymarketcontracts "github.com/ivanzzeth/polymarket-go-contracts"
 	polymarketdata "github.com/ivanzzeth/polymarket-go-data-client"
 	polymarketgamma "github.com/ivanzzeth/polymarket-go-gamma-client"
 	polymarketrealtime "github.com/ivanzzeth/polymarket-go-real-time-data-client"
+
+	"github.com/ivanzzeth/polymarket-go/internal/utils"
 )
 
 type Client struct {
@@ -27,14 +30,29 @@ type Client struct {
 	contractInterface  *polymarketcontracts.ContractInterface
 	clobClient         *polymarketclob.Client
 
+	// Funder address (the actual address that holds funds)
+	funderAddr common.Address
+
 	// Cache for complementary token mappings (key: tokenID string, value: complementary tokenID string)
 	complementaryTokenCache sync.Map
+
+	// Cache for condition ID mappings (key: tokenID string, value: conditionID string)
+	conditionIDCache sync.Map
+
+	// Auto management fields
+	autoRedeemConfig *AutoRedeemConfig
+	autoMergeConfig  *AutoMergeConfig
+	autoRedeemCancel context.CancelFunc
+	autoMergeCancel  context.CancelFunc
+	autoMu           sync.Mutex // Protects auto management state
 }
 
 type ClientConfig struct {
 	RealtimeDataClientOptions []polymarketrealtime.ClientOption
 	ContractInterfaceOptions  []polymarketcontracts.ContractInterfaceOption
 	ClobClientOptions         []polymarketclob.ClobClientOption
+	AutoRedeemConfig          *AutoRedeemConfig
+	AutoMergeConfig           *AutoMergeConfig
 }
 
 type ClientOption func(c *ClientConfig)
@@ -54,6 +72,18 @@ func WithContractInterfaceOptions(options ...polymarketcontracts.ContractInterfa
 func WithClobClientOptions(options ...polymarketclob.ClobClientOption) ClientOption {
 	return func(c *ClientConfig) {
 		c.ClobClientOptions = options
+	}
+}
+
+func WithAutoRedeem(config *AutoRedeemConfig) ClientOption {
+	return func(c *ClientConfig) {
+		c.AutoRedeemConfig = config
+	}
+}
+
+func WithAutoMerge(config *AutoMergeConfig) ClientOption {
+	return func(c *ClientConfig) {
+		c.AutoMergeConfig = config
 	}
 }
 
@@ -116,13 +146,25 @@ func NewClient(ethclient ethclient.EthClientInterface, options ...ClientOption) 
 		return nil, err
 	}
 
-	return &Client{
+	client := &Client{
 		gammaClient:        gammaClient,
 		dataClient:         dataClient,
 		realtimeDataClient: realtimeDataClient,
 		contractInterface:  contractInterface,
 		clobClient:         clobClient,
-	}, nil
+		funderAddr:         funderAddr,
+	}
+
+	// Start auto management services if configured
+	// Auto management runs in background goroutines and can be stopped via Stop methods
+	ctx := context.Background()
+	if defaultOptions.AutoRedeemConfig != nil || defaultOptions.AutoMergeConfig != nil {
+		if err := client.startAutoManagement(ctx, defaultOptions.AutoRedeemConfig, defaultOptions.AutoMergeConfig); err != nil {
+			return nil, fmt.Errorf("failed to start auto management: %w", err)
+		}
+	}
+
+	return client, nil
 }
 
 // GammaClient returns the gamma client
@@ -156,27 +198,52 @@ func (c *Client) EnableTrading(ctx context.Context) ([]common.Hash, error) {
 
 // Split splits collateral into conditional tokens for a binary market
 // Uses standard Polymarket partition [1, 2] for binary outcomes (Yes/No)
-func (c *Client) Split(ctx context.Context, conditionId common.Hash, amount *big.Int) (common.Hash, error) {
-	return c.contractInterface.Split(ctx, conditionId, amount)
+// conditionId: the condition ID as a hex string (e.g., "0x123..." or "123...")
+// amount: the amount of USDC collateral to split (in decimal units, e.g., 1.5 for 1.5 USDC)
+func (c *Client) Split(ctx context.Context, conditionId string, amount decimal.Decimal) (common.Hash, error) {
+	if err := utils.ValidateConditionId(conditionId); err != nil {
+		return common.Hash{}, err
+	}
+	rawAmount := utils.DecimalToRawAmount(amount)
+	return c.contractInterface.Split(ctx, common.HexToHash(conditionId), rawAmount)
 }
 
 // Merge merges conditional tokens back into collateral for a binary market
 // Uses standard Polymarket partition [1, 2] for binary outcomes (Yes/No)
-func (c *Client) Merge(ctx context.Context, conditionId common.Hash, amount *big.Int) (common.Hash, error) {
-	return c.contractInterface.Merge(ctx, conditionId, amount)
+// conditionId: the condition ID as a hex string (e.g., "0x123..." or "123...")
+// amount: the amount of tokens to merge (in decimal units, e.g., 1.5 for 1.5 tokens)
+func (c *Client) Merge(ctx context.Context, conditionId string, amount decimal.Decimal) (common.Hash, error) {
+	if err := utils.ValidateConditionId(conditionId); err != nil {
+		return common.Hash{}, err
+	}
+	rawAmount := utils.DecimalToRawAmount(amount)
+	return c.contractInterface.Merge(ctx, common.HexToHash(conditionId), rawAmount)
 }
 
 // Redeem redeems conditional tokens for a resolved binary market
 // Uses standard Polymarket indexSets [1, 2] for binary outcomes (Yes/No)
-func (c *Client) Redeem(ctx context.Context, conditionId common.Hash) (common.Hash, error) {
-	return c.contractInterface.Redeem(ctx, conditionId)
+// conditionId: the condition ID as a hex string (e.g., "0x123..." or "123...")
+func (c *Client) Redeem(ctx context.Context, conditionId string) (common.Hash, error) {
+	if err := utils.ValidateConditionId(conditionId); err != nil {
+		return common.Hash{}, err
+	}
+	return c.contractInterface.Redeem(ctx, common.HexToHash(conditionId))
 }
 
 // RedeemNegRisk redeems NegRisk market positions
-// amounts is a slice containing the amount to redeem for each outcome
+// conditionId: the condition ID as a hex string (e.g., "0x123..." or "123...")
+// amounts: a slice containing the amount to redeem for each outcome (in decimal units)
 // For binary NegRisk markets, use a slice of two amounts [yesAmount, noAmount]
-func (c *Client) RedeemNegRisk(ctx context.Context, conditionId common.Hash, amounts []*big.Int) (common.Hash, error) {
-	return c.contractInterface.RedeemNegRisk(ctx, conditionId, amounts)
+func (c *Client) RedeemNegRisk(ctx context.Context, conditionId string, amounts []decimal.Decimal) (common.Hash, error) {
+	if err := utils.ValidateConditionId(conditionId); err != nil {
+		return common.Hash{}, err
+	}
+	// Convert decimal amounts to raw amounts
+	rawAmounts := make([]*big.Int, len(amounts))
+	for i, amount := range amounts {
+		rawAmounts[i] = utils.DecimalToRawAmount(amount)
+	}
+	return c.contractInterface.RedeemNegRisk(ctx, common.HexToHash(conditionId), rawAmounts)
 }
 
 // DeploySafe deploys a Gnosis Safe wallet for the configured signer
@@ -225,6 +292,44 @@ func (c *Client) GetComplementaryTokenID(ctx context.Context, tokenID string) (s
 	return complementaryTokenID, nil
 }
 
+// GetConditionIDByTokenID returns the condition ID for a given token ID
+// In Polymarket, each position token (YES/NO) is associated with a specific market condition
+// This function retrieves the underlying condition ID from a token ID
+// Results are cached to avoid repeated contract calls
+func (c *Client) GetConditionIDByTokenID(ctx context.Context, tokenID string) (string, error) {
+	// Check cache first
+	if cached, ok := c.conditionIDCache.Load(tokenID); ok {
+		return cached.(string), nil
+	}
+
+	// Convert tokenID string to *big.Int
+	tokenIDBigInt := new(big.Int)
+	tokenIDBigInt, ok := tokenIDBigInt.SetString(tokenID, 10)
+	if !ok {
+		return "", fmt.Errorf("invalid tokenID format: %s", tokenID)
+	}
+
+	// Call Exchange.GetConditionId to retrieve the condition ID for this token
+	exchange := c.contractInterface.GetExchange()
+	conditionIDHash, err := exchange.GetConditionId(nil, tokenIDBigInt)
+	if err != nil {
+		// Try with negRisk exchange
+		negRiskExchange := c.contractInterface.GetNegRisk()
+		conditionIDHash, err = negRiskExchange.GetConditionId(nil, tokenIDBigInt)
+		if err != nil {
+			return "", fmt.Errorf("failed to get condition ID from contract: %w", err)
+		}
+	}
+
+	// Convert [32]byte hash to hex string
+	conditionID := common.BytesToHash(conditionIDHash[:]).Hex()
+
+	// Store in cache
+	c.conditionIDCache.Store(tokenID, conditionID)
+
+	return conditionID, nil
+}
+
 // ConvertLimitOrder converts a limit order to its complementary side
 // This automatically queries the complementary token ID and performs the conversion
 // Based on Polymarket's complementary token mechanism:
@@ -264,4 +369,10 @@ func (c *Client) ConvertMarketOrder(ctx context.Context, order *types.UserMarket
 
 	// Convert the order
 	return convertMarketOrder(order, complementaryTokenID)
+}
+
+// Close stops all background services and releases resources
+// This should be called when the client is no longer needed to ensure graceful shutdown
+func (c *Client) Close() error {
+	return c.StopAutoManagement()
 }
