@@ -9,12 +9,15 @@ replace github.com/ivanzzeth/polymarket-go-clob-client => ../polymarket-go-clob-
 replace github.com/ivanzzeth/polymarket-go-order-utils => ../polymarket-go-clob-client/polymarket-go-order-utils
 
 require (
+	github.com/ethereum/go-ethereum v1.16.5
 	github.com/ivanzzeth/ethclient v0.1.35
 	github.com/ivanzzeth/polymarket-go-clob-client v0.0.0-00010101000000-000000000000
-	github.com/ivanzzeth/polymarket-go-contracts v0.0.1
+	github.com/ivanzzeth/polymarket-go-contracts v0.0.2
 	github.com/ivanzzeth/polymarket-go-data-client v0.1.1
 	github.com/ivanzzeth/polymarket-go-gamma-client v0.2.1
 	github.com/ivanzzeth/polymarket-go-real-time-data-client v0.3.0
+	github.com/joho/godotenv v1.5.1
+	github.com/shopspring/decimal v1.4.0
 )
 
 require (
@@ -35,7 +38,6 @@ require (
 	github.com/emicklei/dot v1.6.2 // indirect
 	github.com/ethereum/c-kzg-4844/v2 v2.1.5 // indirect
 	github.com/ethereum/go-bigmodexpfix v0.0.0-20250911101455-f9e208c548ab // indirect
-	github.com/ethereum/go-ethereum v1.16.5 // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/ferranbt/fastssz v0.1.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -72,7 +74,6 @@ require (
 	github.com/refraction-networking/utls v1.8.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
-	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/supranational/blst v0.3.16 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect

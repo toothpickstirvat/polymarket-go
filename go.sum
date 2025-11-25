@@ -157,8 +157,8 @@ github.com/ivanzzeth/ethclient v0.1.35 h1:QLySJK1gQl1z3W27Imbhv5Z8ao5BPaPGisGboy
 github.com/ivanzzeth/ethclient v0.1.35/go.mod h1:429cyiRRF0/atJFnCjfkgjZPEFyRgzFRQYHsakF5ifc=
 github.com/ivanzzeth/ethsig v0.0.1 h1:z0lHdNGRIsX7TpwEip/0pLFEXhvb2l8aXIYJsg5xhdM=
 github.com/ivanzzeth/ethsig v0.0.1/go.mod h1:ImQMZpAnI8QyfTQEyqMFVCoxK9ymPr90PTvhGeThnms=
-github.com/ivanzzeth/polymarket-go-contracts v0.0.1 h1:93zEJLAHsHmtkkkdFOTgHH0KoPT2wnj0ywfyEjKUMzI=
-github.com/ivanzzeth/polymarket-go-contracts v0.0.1/go.mod h1:D9e/MoUx6VVeCcRHN8R8uzLATqZuO8T4Qa0qjVJA0bs=
+github.com/ivanzzeth/polymarket-go-contracts v0.0.2 h1:m7Fja3PM9a9UqNxhSX4Hf2lBcbUzaqbpyNyupeGUjXw=
+github.com/ivanzzeth/polymarket-go-contracts v0.0.2/go.mod h1:D9e/MoUx6VVeCcRHN8R8uzLATqZuO8T4Qa0qjVJA0bs=
 github.com/ivanzzeth/polymarket-go-data-client v0.1.1 h1:rOvepGg7JltFmHi8BWICr+PT6EsKJZe6SvDaCitX+y0=
 github.com/ivanzzeth/polymarket-go-data-client v0.1.1/go.mod h1:Vjd5Dnr2SUmcdipyPCnIXNlC5ElVo9eWJDc6zFGcxis=
 github.com/ivanzzeth/polymarket-go-gamma-client v0.2.1 h1:LxGgMb2Fvo/KUrvF2uZSBYIFP7BJfoNOYGQIz+rRUf4=
@@ -167,6 +167,8 @@ github.com/ivanzzeth/polymarket-go-real-time-data-client v0.3.0 h1:TKuuH1COX3VSb
 github.com/ivanzzeth/polymarket-go-real-time-data-client v0.3.0/go.mod h1:fub5XJ4sHPulfakqooafIicZuN+/9yIhTg3Pu3Hbcjs=
 github.com/jackpal/go-nat-pmp v1.0.2 h1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=
 github.com/jackpal/go-nat-pmp v1.0.2/go.mod h1:QPH045xvCAeXUZOxsnwmrtiCoxIr9eob+4orBN1SBKc=
+github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
+github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/klauspost/compress v1.18.1 h1:bcSGx7UbpBqMChDtsF28Lw6v/G94LPrrbMbdC3JH2co=
 github.com/klauspost/compress v1.18.1/go.mod h1:ZQFFVG+MdnR0P+l6wpXgIL4NTtwiKIdBnrBd8Nrxr+0=
 github.com/klauspost/cpuid/v2 v2.0.4/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=

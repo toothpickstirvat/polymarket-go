@@ -2,13 +2,17 @@ package polymarket
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"net/http"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ivanzzeth/ethclient"
 	polymarketclob "github.com/ivanzzeth/polymarket-go-clob-client"
 	clobconst "github.com/ivanzzeth/polymarket-go-clob-client/constants"
+	"github.com/ivanzzeth/polymarket-go-clob-client/types"
+	"github.com/ivanzzeth/polymarket-go-order-utils/pkg/builder"
 
 	polymarketcontracts "github.com/ivanzzeth/polymarket-go-contracts"
 	polymarketdata "github.com/ivanzzeth/polymarket-go-data-client"
@@ -22,6 +26,9 @@ type Client struct {
 	realtimeDataClient *polymarketrealtime.Client
 	contractInterface  *polymarketcontracts.ContractInterface
 	clobClient         *polymarketclob.Client
+
+	// Cache for complementary token mappings (key: tokenID string, value: complementary tokenID string)
+	complementaryTokenCache sync.Map
 }
 
 type ClientConfig struct {
@@ -76,7 +83,35 @@ func NewClient(ethclient ethclient.EthClientInterface, options ...ClientOption) 
 		return nil, err
 	}
 
+	var (
+		orderSigner builder.Signer
+		signerAddr  common.Address
+		funderAddr  common.Address
+	)
+	switch contractInterface.GetSignatureType() {
+	case polymarketcontracts.SignatureTypeEOA:
+		orderSigner = contractInterface.GetEOATradingSigner()
+		signerAddr = contractInterface.GetEOATradingSigner().GetAddress()
+		funderAddr = signerAddr
+	case polymarketcontracts.SignatureTypePolyGnosisSafe:
+		orderSigner = contractInterface.GetSafeTradingSigner()
+		signerAddr = contractInterface.GetSafeTradingSigner().GetAddress()
+		funderAddr, err = contractInterface.GetSafeAddress(signerAddr)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported signature type")
+	}
+
+	defaultOptions.ClobClientOptions = append(defaultOptions.ClobClientOptions, polymarketclob.WithSigner(orderSigner, funderAddr, contractInterface.GetSignatureType()))
+
 	clobClient, err := polymarketclob.NewClient(clobconst.CLOB_API_URL, chainID.Int64(), defaultOptions.ClobClientOptions...)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = clobClient.CreateOrDeriveApiKey()
 	if err != nil {
 		return nil, err
 	}
@@ -122,22 +157,19 @@ func (c *Client) EnableTrading(ctx context.Context) ([]common.Hash, error) {
 // Split splits collateral into conditional tokens for a binary market
 // Uses standard Polymarket partition [1, 2] for binary outcomes (Yes/No)
 func (c *Client) Split(ctx context.Context, conditionId common.Hash, amount *big.Int) (common.Hash, error) {
-	partition := []*big.Int{big.NewInt(1), big.NewInt(2)}
-	return c.contractInterface.Split(ctx, conditionId, partition, amount)
+	return c.contractInterface.Split(ctx, conditionId, amount)
 }
 
 // Merge merges conditional tokens back into collateral for a binary market
 // Uses standard Polymarket partition [1, 2] for binary outcomes (Yes/No)
 func (c *Client) Merge(ctx context.Context, conditionId common.Hash, amount *big.Int) (common.Hash, error) {
-	partition := []*big.Int{big.NewInt(1), big.NewInt(2)}
-	return c.contractInterface.Merge(ctx, conditionId, partition, amount)
+	return c.contractInterface.Merge(ctx, conditionId, amount)
 }
 
 // Redeem redeems conditional tokens for a resolved binary market
 // Uses standard Polymarket indexSets [1, 2] for binary outcomes (Yes/No)
 func (c *Client) Redeem(ctx context.Context, conditionId common.Hash) (common.Hash, error) {
-	indexSets := []*big.Int{big.NewInt(1), big.NewInt(2)}
-	return c.contractInterface.Redeem(ctx, conditionId, indexSets)
+	return c.contractInterface.Redeem(ctx, conditionId)
 }
 
 // RedeemNegRisk redeems NegRisk market positions
@@ -151,4 +183,85 @@ func (c *Client) RedeemNegRisk(ctx context.Context, conditionId common.Hash, amo
 // Returns the Safe proxy address and the deployment transaction hash
 func (c *Client) DeploySafe() (safeProxy common.Address, txHash common.Hash, err error) {
 	return c.contractInterface.DeploySafe()
+}
+
+// GetComplementaryTokenID returns the complementary token ID for a given position token
+// In Polymarket's binary markets, every YES token has a corresponding NO token as its complement
+// For example: if tokenID is YES, this returns the NO token ID, and vice versa
+// Results are cached to avoid repeated contract calls
+func (c *Client) GetComplementaryTokenID(ctx context.Context, tokenID string) (string, error) {
+	// Check cache first
+	if cached, ok := c.complementaryTokenCache.Load(tokenID); ok {
+		return cached.(string), nil
+	}
+
+	// Convert tokenID string to *big.Int
+	tokenIDBigInt := new(big.Int)
+	tokenIDBigInt, ok := tokenIDBigInt.SetString(tokenID, 10)
+	if !ok {
+		return "", fmt.Errorf("invalid tokenID format: %s", tokenID)
+	}
+
+	// Call Exchange.GetComplement
+	exchange := c.contractInterface.GetExchange()
+	complementBigInt, err := exchange.GetComplement(nil, tokenIDBigInt)
+	if err != nil {
+		// Try with negRisk exchange
+		negRiskExchange := c.contractInterface.GetNegRisk()
+		complementBigInt, err = negRiskExchange.GetComplement(nil, tokenIDBigInt)
+		if err != nil {
+			return "", fmt.Errorf("failed to get complementary token from contract: %w", err)
+		}
+	}
+
+	// Convert result *big.Int to string
+	complementaryTokenID := complementBigInt.String()
+
+	// Store both directions in cache (tokenID -> complement and complement -> tokenID)
+	// This is because if A's complement is B, then B's complement is A
+	c.complementaryTokenCache.Store(tokenID, complementaryTokenID)
+	c.complementaryTokenCache.Store(complementaryTokenID, tokenID)
+
+	return complementaryTokenID, nil
+}
+
+// ConvertLimitOrder converts a limit order to its complementary side
+// This automatically queries the complementary token ID and performs the conversion
+// Based on Polymarket's complementary token mechanism:
+//   - Buy token @ P  → Sell complementary @ (1-P)
+//   - Sell token @ P → Buy complementary @ (1-P)
+//
+// This allows traders to achieve the same position using whichever side has better liquidity
+// For example: Buy YES @ 0.6 = Sell NO @ 0.4
+func (c *Client) ConvertLimitOrder(ctx context.Context, order *types.UserOrder) (*types.UserOrder, error) {
+	if order == nil {
+		return nil, fmt.Errorf("order cannot be nil")
+	}
+
+	// Get complementary token ID
+	complementaryTokenID, err := c.GetComplementaryTokenID(ctx, order.TokenID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get complementary token ID: %w", err)
+	}
+
+	// Convert the order
+	return convertOrder(order, complementaryTokenID)
+}
+
+// ConvertMarketOrder converts a market order to its complementary side
+// This automatically queries the complementary token ID and performs the conversion
+// The conversion works by: market order → limit order → convert → limit order → market order
+func (c *Client) ConvertMarketOrder(ctx context.Context, order *types.UserMarketOrder) (*types.UserMarketOrder, error) {
+	if order == nil {
+		return nil, fmt.Errorf("order cannot be nil")
+	}
+
+	// Get complementary token ID
+	complementaryTokenID, err := c.GetComplementaryTokenID(ctx, order.TokenID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get complementary token ID: %w", err)
+	}
+
+	// Convert the order
+	return convertMarketOrder(order, complementaryTokenID)
 }
