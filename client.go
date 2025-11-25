@@ -272,12 +272,18 @@ func (c *Client) GetComplementaryTokenID(ctx context.Context, tokenID string) (s
 	// Call Exchange.GetComplement
 	exchange := c.contractInterface.GetExchange()
 	complementBigInt, err := exchange.GetComplement(nil, tokenIDBigInt)
-	if err != nil {
-		// Try with negRisk exchange
+
+	// If error or zero result (not found on chain), try with negRisk exchange
+	if err != nil || complementBigInt == nil || complementBigInt.Sign() == 0 {
 		negRiskExchange := c.contractInterface.GetNegRisk()
 		complementBigInt, err = negRiskExchange.GetComplement(nil, tokenIDBigInt)
 		if err != nil {
 			return "", fmt.Errorf("failed to get complementary token from contract: %w", err)
+		}
+
+		// Check if negRisk also returned zero
+		if complementBigInt == nil || complementBigInt.Sign() == 0 {
+			return "", fmt.Errorf("tokenID not found on chain (both Exchange and NegRisk returned zero)")
 		}
 	}
 
@@ -312,12 +318,18 @@ func (c *Client) GetConditionIDByTokenID(ctx context.Context, tokenID string) (s
 	// Call Exchange.GetConditionId to retrieve the condition ID for this token
 	exchange := c.contractInterface.GetExchange()
 	conditionIDHash, err := exchange.GetConditionId(nil, tokenIDBigInt)
-	if err != nil {
-		// Try with negRisk exchange
+
+	// If error or zero result (not found on chain), try with negRisk exchange
+	if err != nil || conditionIDHash == (common.Hash{}) {
 		negRiskExchange := c.contractInterface.GetNegRisk()
 		conditionIDHash, err = negRiskExchange.GetConditionId(nil, tokenIDBigInt)
 		if err != nil {
 			return "", fmt.Errorf("failed to get condition ID from contract: %w", err)
+		}
+
+		// Check if negRisk also returned zero
+		if conditionIDHash == (common.Hash{}) {
+			return "", fmt.Errorf("tokenID not found on chain (both Exchange and NegRisk returned zero)")
 		}
 	}
 

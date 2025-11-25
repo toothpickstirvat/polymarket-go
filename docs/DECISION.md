@@ -19,11 +19,45 @@ Focus on **Polymarket-specific features** only, delegate generic quant features 
 - `Close()` - Graceful shutdown
 - **Value**: Hands-free position management
 
-### 3. Arbitrage Scanner (Planned)
-- Dutch-book arbitrage detection
-- Cross-market opportunities
-- Gas cost optimization
-- **Value**: Unique to Polymarket's complementary token mechanism
+### 3. Arbitrage Scanner (⚠️ Needs Redesign)
+
+**CRITICAL FINDING**: Polymarket order books are **mirrored** - traditional Dutch-book arbitrage is **NOT POSSIBLE**.
+
+**Mirrored Order Book Constraint**:
+```
+YES Bid = 1 - NO Ask
+YES Ask = 1 - NO Bid
+```
+This means YES + NO always equals 1.0, eliminating traditional arbitrage.
+
+**What Actually Works**:
+
+**A. Market Making (Spread Capture)**:
+- Provide liquidity by placing orders at bid/ask
+- Profit from spread when both sides fill
+- **Not risk-free**: Requires inventory management and directional risk
+- Example: Buy YES @ 0.53, Sell @ 0.55 → 2 cent profit per share
+
+**B. Cross-Platform Arbitrage**:
+- Polymarket vs Kalshi, PredictIt, etc.
+- Different platforms = independent order books
+- Example: Buy on Kalshi @ 0.60, Sell on Polymarket @ 0.65 → 5% profit
+- **Challenge**: Requires capital on multiple platforms, withdrawal delays
+
+**C. NegRisk Market Arbitrage** (needs verification):
+- Multi-outcome markets may not have same mirroring
+- If sum(outcome_asks) < 1.0, buy all outcomes
+- **Status**: Unverified if this can actually exist
+
+**Historical "$40M" Reality Check**:
+- Likely market making profits, NOT pure arbitrage
+- Information edge trading (news/events)
+- Cross-platform opportunities
+- High volatility event trading
+
+**Revised Focus**: Market making and cross-platform arbitrage, NOT Dutch-book arbitrage.
+
+**Value**: Understanding market microstructure is valuable, but pure arbitrage is limited.
 
 ### 4. NegRisk Handler (Planned)
 - NegRisk market detection
@@ -61,11 +95,28 @@ Delegate to BBGO:
 - Examples and documentation
 - Coding standards
 
-### Phase 2: Arbitrage Scanner (Next)
-- Architecture design
-- Dutch-book detection
-- Auto execution
-- Gas optimization
+### Phase 2: Market Making / Cross-Platform Arbitrage (Redesigned)
+
+**Status**: On hold pending decision on direction
+
+**Options**:
+
+**Option A: Market Making Bot**
+- Spread detection and liquidity provision
+- Inventory risk management
+- Not pure arbitrage - requires capital and risk tolerance
+
+**Option B: Cross-Platform Arbitrage**
+- Requires integration with Kalshi, PredictIt APIs
+- Multi-platform capital requirements
+- Withdrawal/deposit timing challenges
+
+**Option C: Pivot to Other Polymarket-Specific Features**
+- Enhanced order routing with slippage optimization
+- Advanced position management tools
+- Strategy backtesting framework
+
+**Recommendation**: Discuss with users what direction makes most sense given the arbitrage limitations discovered.
 
 ### Phase 3: BBGO Integration (Future)
 - Exchange interface
@@ -74,7 +125,16 @@ Delegate to BBGO:
 
 ## Success Criteria
 
-- Smart order conversion accuracy > 95%
-- Average cost savings > 15%
-- Order optimization < 100ms
-- Clear documentation with runnable examples
+### Phase 1 (Completed)
+- ✅ Smart order conversion accuracy > 95%
+- ✅ Average cost savings > 15%
+- ✅ Order optimization < 100ms
+- ✅ Clear documentation with runnable examples
+
+### Phase 2 (Arbitrage Scanner)
+- Detection latency < 1 second after price change
+- End-to-end execution < 5 seconds
+- Accuracy > 95% (no false positives leading to losses)
+- Support 100+ markets concurrently
+- Gas cost estimation within 10% of actual
+- Profitable execution rate > 80% (when auto-execute enabled)

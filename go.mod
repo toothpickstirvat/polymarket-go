@@ -6,8 +6,6 @@ toolchain go1.24.9
 
 replace github.com/ivanzzeth/polymarket-go-clob-client => ../polymarket-go-clob-client
 
-replace github.com/ivanzzeth/polymarket-go-order-utils => ../polymarket-go-clob-client/polymarket-go-order-utils
-
 require (
 	github.com/ethereum/go-ethereum v1.16.5
 	github.com/ivanzzeth/ethclient v0.1.35
@@ -15,6 +13,7 @@ require (
 	github.com/ivanzzeth/polymarket-go-contracts v0.0.2
 	github.com/ivanzzeth/polymarket-go-data-client v0.1.1
 	github.com/ivanzzeth/polymarket-go-gamma-client v0.2.1
+	github.com/ivanzzeth/polymarket-go-order-utils v1.0.0
 	github.com/ivanzzeth/polymarket-go-real-time-data-client v0.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/shopspring/decimal v1.4.0
@@ -56,7 +55,6 @@ require (
 	github.com/icholy/digest v1.1.0 // indirect
 	github.com/imroc/req/v3 v3.56.0 // indirect
 	github.com/ivanzzeth/ethsig v0.0.1 // indirect
-	github.com/ivanzzeth/polymarket-go-order-utils v0.0.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/klauspost/compress v1.18.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
