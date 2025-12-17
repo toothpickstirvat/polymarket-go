@@ -196,6 +196,11 @@ func (c *Client) ClobClient() *polymarketclob.Client {
 	return c.clobClient
 }
 
+// FunderAddress returns the funder address (the actual address that holds funds)
+func (c *Client) FunderAddress() common.Address {
+	return c.funderAddr
+}
+
 func (c *Client) EnableTrading(ctx context.Context) ([]common.Hash, error) {
 	return c.contractInterface.EnableTrading(ctx)
 }
@@ -401,8 +406,9 @@ func (c *Client) ConvertMarketOrderToComplementary(ctx context.Context, order *t
 //   - Sell NO @ 0.51  → Buy NO @ 0.49 (0.51 - 0.02)
 //
 // When combined with ConvertLimitOrderToComplementary, you can create market making strategies:
-//   Buy YES @ 0.49 → (opposite + spread) → Sell YES @ 0.51 → (complementary) → Buy NO @ 0.49
-//   Result: Buy YES @ 0.49 + Buy NO @ 0.49 = 0.98 cost, merge to 1.0, profit = 0.02
+//
+//	Buy YES @ 0.49 → (opposite + spread) → Sell YES @ 0.51 → (complementary) → Buy NO @ 0.49
+//	Result: Buy YES @ 0.49 + Buy NO @ 0.49 = 0.98 cost, merge to 1.0, profit = 0.02
 //
 // This is useful for:
 //   - Market making with spreads
