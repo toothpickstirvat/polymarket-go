@@ -161,12 +161,12 @@ github.com/ivanzzeth/polymarket-go-contracts v0.1.0 h1:XXyNE20BlHY567sV1srhXdSEV
 github.com/ivanzzeth/polymarket-go-contracts v0.1.0/go.mod h1:a5sViVl8tT799MxR9TVUjtK1Zj9TRmSn84JNTHVycJ4=
 github.com/ivanzzeth/polymarket-go-data-client v0.1.1 h1:rOvepGg7JltFmHi8BWICr+PT6EsKJZe6SvDaCitX+y0=
 github.com/ivanzzeth/polymarket-go-data-client v0.1.1/go.mod h1:Vjd5Dnr2SUmcdipyPCnIXNlC5ElVo9eWJDc6zFGcxis=
-github.com/ivanzzeth/polymarket-go-gamma-client v0.2.1 h1:LxGgMb2Fvo/KUrvF2uZSBYIFP7BJfoNOYGQIz+rRUf4=
-github.com/ivanzzeth/polymarket-go-gamma-client v0.2.1/go.mod h1:FWc0Kws2DUNmNiZPIP+K0z783bLFpRKhUJkfPD0mhiE=
+github.com/ivanzzeth/polymarket-go-gamma-client v0.2.3 h1:t27AfR4VaIA8/es8ualGLITJZoXhxPz5hRMpQ58ZMRo=
+github.com/ivanzzeth/polymarket-go-gamma-client v0.2.3/go.mod h1:FWc0Kws2DUNmNiZPIP+K0z783bLFpRKhUJkfPD0mhiE=
 github.com/ivanzzeth/polymarket-go-order-utils v1.0.0 h1:qy0t/vsQeF5Sq9b4v5Xhc+Onia8kgXzon/MZHTYvQRM=
 github.com/ivanzzeth/polymarket-go-order-utils v1.0.0/go.mod h1:IilhcFPygtpZ+pqtqP3Z4kkC0NYHFfvEdf+x6o8DHuI=
-github.com/ivanzzeth/polymarket-go-real-time-data-client v0.3.0 h1:TKuuH1COX3VSbCXGiWjLZQ97af2J9vTCpSghqeYNJ0U=
-github.com/ivanzzeth/polymarket-go-real-time-data-client v0.3.0/go.mod h1:fub5XJ4sHPulfakqooafIicZuN+/9yIhTg3Pu3Hbcjs=
+github.com/ivanzzeth/polymarket-go-real-time-data-client v0.3.1 h1:3/Q+XnDRppIQBiZc9bOERWFwnh62a5E4gZThJa49SPk=
+github.com/ivanzzeth/polymarket-go-real-time-data-client v0.3.1/go.mod h1:fub5XJ4sHPulfakqooafIicZuN+/9yIhTg3Pu3Hbcjs=
 github.com/jackpal/go-nat-pmp v1.0.2 h1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=
 github.com/jackpal/go-nat-pmp v1.0.2/go.mod h1:QPH045xvCAeXUZOxsnwmrtiCoxIr9eob+4orBN1SBKc=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=

@@ -12,9 +12,9 @@ require (
 	github.com/ivanzzeth/polymarket-go-clob-client v0.0.0-00010101000000-000000000000
 	github.com/ivanzzeth/polymarket-go-contracts v0.1.0
 	github.com/ivanzzeth/polymarket-go-data-client v0.1.1
-	github.com/ivanzzeth/polymarket-go-gamma-client v0.2.1
+	github.com/ivanzzeth/polymarket-go-gamma-client v0.2.3
 	github.com/ivanzzeth/polymarket-go-order-utils v1.0.0
-	github.com/ivanzzeth/polymarket-go-real-time-data-client v0.3.0
+	github.com/ivanzzeth/polymarket-go-real-time-data-client v0.3.1
 	github.com/joho/godotenv v1.5.1
 	github.com/shopspring/decimal v1.4.0
 )
