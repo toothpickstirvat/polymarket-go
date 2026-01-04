@@ -234,6 +234,28 @@ func (c *Client) Merge(ctx context.Context, conditionId string, amount decimal.D
 	return c.contractInterface.Merge(ctx, common.HexToHash(conditionId), rawAmount)
 }
 
+// SplitNegRisk splits collateral into conditional tokens for a NegRisk market
+// conditionId: the condition ID as a hex string (e.g., "0x123..." or "123...")
+// amount: the amount of USDC collateral to split (in decimal units, e.g., 1.5 for 1.5 USDC)
+func (c *Client) SplitNegRisk(ctx context.Context, conditionId string, amount decimal.Decimal) (common.Hash, error) {
+	if err := utils.ValidateConditionId(conditionId); err != nil {
+		return common.Hash{}, err
+	}
+	rawAmount := utils.DecimalToRawAmount(amount)
+	return c.contractInterface.SplitNegRisk(ctx, common.HexToHash(conditionId), rawAmount)
+}
+
+// MergeNegRisk merges conditional tokens back into collateral for a NegRisk market
+// conditionId: the condition ID as a hex string (e.g., "0x123..." or "123...")
+// amount: the amount of tokens to merge (in decimal units, e.g., 1.5 for 1.5 tokens)
+func (c *Client) MergeNegRisk(ctx context.Context, conditionId string, amount decimal.Decimal) (common.Hash, error) {
+	if err := utils.ValidateConditionId(conditionId); err != nil {
+		return common.Hash{}, err
+	}
+	rawAmount := utils.DecimalToRawAmount(amount)
+	return c.contractInterface.MergeNegRisk(ctx, common.HexToHash(conditionId), rawAmount)
+}
+
 // Redeem redeems conditional tokens for a resolved binary market
 // Uses standard Polymarket indexSets [1, 2] for binary outcomes (Yes/No)
 // conditionId: the condition ID as a hex string (e.g., "0x123..." or "123...")
