@@ -10,7 +10,7 @@ require (
 	github.com/ivanzzeth/polymarket-go-clob-client v0.0.5
 	github.com/ivanzzeth/polymarket-go-contracts v0.1.3
 	github.com/ivanzzeth/polymarket-go-data-client v0.1.1
-	github.com/ivanzzeth/polymarket-go-gamma-client v0.2.3
+	github.com/ivanzzeth/polymarket-go-gamma-client v0.2.4
 	github.com/ivanzzeth/polymarket-go-order-utils v1.0.0
 	github.com/ivanzzeth/polymarket-go-real-time-data-client v0.3.3
 	github.com/joho/godotenv v1.5.1
