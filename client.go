@@ -32,6 +32,8 @@ type Client struct {
 	clobClient         *polymarketclob.Client
 	ethClient          *ethclient.Client // Ethereum client for transaction operations
 
+	// Signer address (the EOA that signs transactions)
+	signerAddr common.Address
 	// Funder address (the actual address that holds funds)
 	funderAddr common.Address
 
@@ -156,6 +158,7 @@ func NewClient(ethclient *ethclient.Client, options ...ClientOption) (*Client, e
 		contractInterface:  contractInterface,
 		clobClient:         clobClient,
 		ethClient:          ethclient,
+		signerAddr:         signerAddr,
 		funderAddr:         funderAddr,
 	}
 
@@ -199,6 +202,11 @@ func (c *Client) ClobClient() *polymarketclob.Client {
 // EthClient returns the Ethereum client
 func (c *Client) EthClient() *ethclient.Client {
 	return c.ethClient
+}
+
+// GetSignerAddress returns the signer's EOA address
+func (c *Client) GetSignerAddress() common.Address {
+	return c.signerAddr
 }
 
 // FunderAddress returns the funder address (the actual address that holds funds)
