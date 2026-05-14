@@ -12,10 +12,10 @@ import (
 	polymarketclob "github.com/ivanzzeth/polymarket-go-clob-client"
 	clobconst "github.com/ivanzzeth/polymarket-go-clob-client/constants"
 	"github.com/ivanzzeth/polymarket-go-clob-client/types"
-	"github.com/ivanzzeth/polymarket-go-order-utils/pkg/builder"
+	"github.com/ivanzzeth/polymarket-go-order-utils/v2/pkg/builder"
 	"github.com/shopspring/decimal"
 
-	polymarketcontracts "github.com/ivanzzeth/polymarket-go-contracts"
+	polymarketcontracts "github.com/ivanzzeth/polymarket-go-contracts/v2"
 	polymarketdata "github.com/ivanzzeth/polymarket-go-data-client"
 	polymarketgamma "github.com/ivanzzeth/polymarket-go-gamma-client"
 	polymarketrealtime "github.com/ivanzzeth/polymarket-go-real-time-data-client"

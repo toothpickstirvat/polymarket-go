@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ivanzzeth/ethclient"
 	polymarket "github.com/ivanzzeth/polymarket-go"
-	polymarketcontracts "github.com/ivanzzeth/polymarket-go-contracts"
-	"github.com/ivanzzeth/polymarket-go-contracts/signer"
+	polymarketcontracts "github.com/ivanzzeth/polymarket-go-contracts/v2"
+	"github.com/ivanzzeth/polymarket-go-contracts/v2/signer"
 	"github.com/joho/godotenv"
 )
 

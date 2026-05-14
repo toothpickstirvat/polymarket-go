@@ -11,7 +11,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/ivanzzeth/polymarket-go-clob-client/types"
-	polymarketcontracts "github.com/ivanzzeth/polymarket-go-contracts"
+	polymarketcontracts "github.com/ivanzzeth/polymarket-go-contracts/v2"
 )
 
 // BalanceQueryOption contains options for balance queries

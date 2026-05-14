@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	polymarketcontracts "github.com/ivanzzeth/polymarket-go-contracts"
+	polymarketcontracts "github.com/ivanzzeth/polymarket-go-contracts/v2"
 	"github.com/shopspring/decimal"
 )
 
