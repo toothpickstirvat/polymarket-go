@@ -8,7 +8,7 @@ require (
 	github.com/ethereum/go-ethereum v1.16.7
 	github.com/ivanzzeth/ethclient v0.1.35
 	github.com/ivanzzeth/polymarket-go-clob-client v0.1.0
-	github.com/ivanzzeth/polymarket-go-contracts/v2 v2.0.0
+	github.com/ivanzzeth/polymarket-go-contracts/v2 v2.0.1
 	github.com/ivanzzeth/polymarket-go-data-client v0.1.1
 	github.com/ivanzzeth/polymarket-go-gamma-client v0.2.4
 	github.com/ivanzzeth/polymarket-go-order-utils/v2 v2.0.0
